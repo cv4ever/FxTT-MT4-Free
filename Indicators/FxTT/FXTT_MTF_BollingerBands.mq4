@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2016, Carlos Oliveira"
 #property link      "https://www.forextradingtools.eu/products/indicators/mtf-bollinger-bands-indicator/?utm_campaign=properties.indicator&utm_medium=special&utm_source=mt4terminal"
-#property version   "1.10"
+#property version   "1.20"
 #property strict
 #property indicator_chart_window
 #property indicator_buffers 27
@@ -740,8 +740,11 @@ int RunIndicators()
 //+------------------------------------------------------------------+
 void DrawPriceLabel(bool show,int lblHwnd,double price,string text,color foreground,color background=clrLightGray)
   {
-   string name="MTF BBands"+text;
-   ObjectDelete(0,name);
+   const string prefix = "MTF BBands";
+   string lblName=prefix+text;
+   string hLineName=prefix+"hLine"+text;
+   ObjectDelete(0,lblName);
+   ObjectDelete(0,hLineName);
    if(show)
      {
       int x,y;
@@ -753,11 +756,13 @@ void DrawPriceLabel(bool show,int lblHwnd,double price,string text,color foregro
       y = y - 8;
       ChartXYToTimePrice(0,x,y,window,fwdTime,price);
 
-      ObjectCreate(name,OBJ_TEXT,0,fwdTime,price);
-      ObjectSetText(name,text,9,"Verdana",foreground);
-      ObjectSet(name,OBJPROP_CORNER,0);
-      ObjectSet(name,OBJPROP_XDISTANCE,250);
-      ObjectSet(name,OBJPROP_YDISTANCE,20);
+      ObjectCreate(lblName,OBJ_TEXT,0,fwdTime,price);
+      ObjectSetText(lblName,text,9,"Verdana",foreground);
+      ObjectSet(lblName,OBJPROP_CORNER,0);
+      ObjectSet(lblName,OBJPROP_XDISTANCE,250);
+      ObjectSet(lblName,OBJPROP_YDISTANCE,20);
+      
+      HLineCreate(0,hLineName,0,price,foreground,1,1);
      }
   }
 //+------------------------------------------------------------------+
@@ -829,3 +834,48 @@ void CPanelDialog::ReadIndicatorsData()
 
   }
 //+------------------------------------------------------------------+
+bool HLineCreate(const long            chart_ID=0,        // chart's ID 
+                 const string          name="HLine",      // line name 
+                 const int             sub_window=0,      // subwindow index 
+                 double                price=0,           // line price 
+                 const color           clr=clrRed,        // line color 
+                 const ENUM_LINE_STYLE style=STYLE_SOLID, // line style 
+                 const int             width=1,           // line width 
+                 const bool            back=false,        // in the background 
+                 const bool            selection=true,    // highlight to move 
+                 const bool            hidden=true,       // hidden in the object list 
+                 const long            z_order=0)         // priority for mouse click 
+  { 
+//--- if the price is not set, set it at the current Bid price level 
+   if(!price) 
+      price=SymbolInfoDouble(Symbol(),SYMBOL_BID); 
+//--- reset the error value 
+   ResetLastError(); 
+//--- create a horizontal line 
+   if(!ObjectCreate(chart_ID,name,OBJ_HLINE,sub_window,0,price)) 
+     { 
+      Print(__FUNCTION__, 
+            ": failed to create a horizontal line! Error code = ",GetLastError()); 
+      return(false); 
+     } 
+//--- set line color 
+   ObjectSetInteger(chart_ID,name,OBJPROP_COLOR,clr); 
+//--- set line display style 
+   ObjectSetInteger(chart_ID,name,OBJPROP_STYLE,style); 
+//--- set line width 
+   ObjectSetInteger(chart_ID,name,OBJPROP_WIDTH,width); 
+//--- display in the foreground (false) or background (true) 
+   ObjectSetInteger(chart_ID,name,OBJPROP_BACK,back); 
+//--- enable (true) or disable (false) the mode of moving the line by mouse 
+//--- when creating a graphical object using ObjectCreate function, the object cannot be 
+//--- highlighted and moved by default. Inside this method, selection parameter 
+//--- is true by default making it possible to highlight and move the object 
+   ObjectSetInteger(chart_ID,name,OBJPROP_SELECTABLE,selection); 
+   ObjectSetInteger(chart_ID,name,OBJPROP_SELECTED,selection); 
+//--- hide (true) or display (false) graphical object name in the object list 
+   ObjectSetInteger(chart_ID,name,OBJPROP_HIDDEN,hidden); 
+//--- set the priority for receiving the event of a mouse click in the chart 
+   ObjectSetInteger(chart_ID,name,OBJPROP_ZORDER,z_order); 
+//--- successful execution 
+   return(true); 
+  } 
