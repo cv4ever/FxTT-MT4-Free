@@ -184,3 +184,4 @@ Scripts/Examples/DLL/Libraries/DLLSample.dll
 Scripts/Examples/Pipes/PipeClient.mq4
 Scripts/Examples/Pipes/PipeClientPure.mq4
 Scripts/PeriodConverter.mq4
+*.bin

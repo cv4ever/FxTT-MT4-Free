@@ -4,8 +4,8 @@
 //|                                         https://www.forextradingtools.eu |
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2016, Carlos Oliveira"
-#property link      "https://www.forextradingtools.eu/products/indicators/mtf-bollinger-bands-indicator/?utm_campaign=properties.indicator&utm_medium=special&utm_source=mt4terminal"
-#property version   "1.20"
+#property link      "https://www.forextradingtools.eu/products/indicators/mtf-bollinger-bands-indicator/"
+#property version   "2.1"
 #property strict
 #property indicator_chart_window
 #property indicator_buffers 27
@@ -13,119 +13,14 @@
 #include <Controls\Dialog.mqh>
 #include <Controls\CheckGroup.mqh>
 
-/*
-#property indicator_color1    clrRoyalBlue  
-#property indicator_width1    1
-#property indicator_style1    STYLE_DOT
-
-#property indicator_color2    clrMediumSeaGreen  
-#property indicator_width2    1
-#property indicator_style2    STYLE_DOT
-
-#property indicator_color3    clrTomato  
-#property indicator_width3    1
-#property indicator_style3    STYLE_DOT
-
-#property indicator_color4    clrRoyalBlue  
-#property indicator_width4    1
-#property indicator_style4    STYLE_DOT
-
-#property indicator_color5    clrMediumSeaGreen  
-#property indicator_width5    1
-#property indicator_style5    STYLE_DOT
-
-#property indicator_color6    clrTomato  
-#property indicator_width6    1
-#property indicator_style6    STYLE_DOT
-
-#property indicator_color7    clrRoyalBlue  
-#property indicator_width7    1
-#property indicator_style7    STYLE_DOT
-
-#property indicator_color8    clrMediumSeaGreen  
-#property indicator_width8    1
-#property indicator_style8    STYLE_DOT
-
-#property indicator_color9    clrTomato  
-#property indicator_width9    1
-#property indicator_style9    STYLE_DOT
-
-#property indicator_color10    clrRoyalBlue  
-#property indicator_width10    1
-#property indicator_style10    STYLE_DOT
-
-#property indicator_color11    clrMediumSeaGreen  
-#property indicator_width11    1
-#property indicator_style11    STYLE_DOT
-
-#property indicator_color12    clrTomato  
-#property indicator_width12    1
-#property indicator_style12    STYLE_DOT
-
-#property indicator_color13    clrRoyalBlue  
-#property indicator_width13    1
-#property indicator_style13    STYLE_DOT
-
-#property indicator_color14    clrMediumSeaGreen  
-#property indicator_width14    1
-#property indicator_style14    STYLE_DOT
-
-#property indicator_color15    clrTomato  
-#property indicator_width15    1
-#property indicator_style15    STYLE_DOT
-
-#property indicator_color16    clrTomato  
-#property indicator_width16    1
-#property indicator_style16    STYLE_DOT
-
-#property indicator_color17    clrTomato  
-#property indicator_width17    1
-#property indicator_style17    STYLE_DOT
-
-#property indicator_color18    clrTomato  
-#property indicator_width18    1
-#property indicator_style18    STYLE_DOT
-
-#property indicator_color19    clrTomato  
-#property indicator_width19    1
-#property indicator_style19    STYLE_DOT
-
-#property indicator_color20    clrTomato  
-#property indicator_width20    1
-#property indicator_style20    STYLE_DOT
-
-#property indicator_color21    clrTomato  
-#property indicator_width21    1
-#property indicator_style21    STYLE_DOT
-
-#property indicator_color22    clrTomato  
-#property indicator_width22    1
-#property indicator_style22    STYLE_DOT
-
-#property indicator_color23    clrTomato  
-#property indicator_width23    1
-#property indicator_style23    STYLE_DOT
-
-#property indicator_color24    clrTomato  
-#property indicator_width24    1
-#property indicator_style24    STYLE_DOT
-
-#property indicator_color25    clrTomato  
-#property indicator_width25    1
-#property indicator_style25    STYLE_DOT
-
-#property indicator_color26    clrTomato  
-#property indicator_width26    1
-#property indicator_style26    STYLE_DOT
-
-#property indicator_color27    clrTomato  
-#property indicator_width27    1
-#property indicator_style27    STYLE_DOT
-*/
-
 extern int BBPeriod=20;                         //Bollinger Bands Period
-extern int BBDeviations=2;                      //Bollinger Bands Deviations
+extern double BBDeviations=2.0;                      //Bollinger Bands Deviations
 extern int BBShift=0;                           //Bollinger Bands Shift
+
+extern bool ShowBandsLines =  true;             //Show Bands Lines
+extern bool ShowHorizontalLines = true;         //Show Horizontal Lines
+extern bool ShowPriceLabels = true;             //Show PriceLabels
+
 
 extern ENUM_LINE_STYLE UpperStyle = STYLE_DOT;  //Upper Band line style
 extern int UpperLineWidth = 1;                  //Upper Band line width
@@ -155,6 +50,7 @@ extern color LowerLineColor = clrPurple;        //Lower Band line style
 
 string  DataFileName="data.bin";                // File name
 string  DataDirectoryName="MTFBBands";   // Folder name
+const string prefix = "MTF BBands";
 //+------------------------------------------------------------------+
 //| Class CPanelDialog                                               |
 //| Usage: main dialog of the SimplePanel application                |
@@ -328,7 +224,12 @@ void CPanelDialog::OnChangeCheckGroup(void)
 //|                                                                  |
 //+------------------------------------------------------------------+
 void CPanelDialog::DrawIndicatorsData()
-  {
+  {  
+   DrawLabels();
+   
+   if(!ShowBandsLines)
+      return;
+      
    if((mMN1))
      {
       SetIndexStyle(0,DRAW_LINE);
@@ -437,51 +338,50 @@ void CPanelDialog::DrawIndicatorsData()
       SetIndexStyle(25,DRAW_NONE);
       SetIndexStyle(26,DRAW_NONE);
       ObjectsDeleteAll(ChartID(),"BBM1");
-     }
-
-   DrawLabels();
+     }   
   }
 //+------------------------------------------------------------------+
 //|                                                                  |
 //+------------------------------------------------------------------+
 void CPanelDialog::DrawLabels()
   {
+   ObjectsDeleteAll(0,prefix);
+   
+   DrawPriceLabel(mM1,lblM1h,bufferM1BBh[0],"M1 BB Upper",UpperLineColor);
+   DrawPriceLabel(mM1,lblM1m,bufferM1BBm[0],"M1 BB Main",MainLineColor);
+   DrawPriceLabel(mM1,lblM1l,bufferM1BBl[0],"M1 BB Lower",LowerLineColor);
 
-   DrawPriceLabel(mM1,lblM1h,bufferM1BBh[0],"M1 Upper Band",UpperLineColor);
-   DrawPriceLabel(mM1,lblM1m,bufferM1BBm[0],"M1 Main Band",MainLineColor);
-   DrawPriceLabel(mM1,lblM1l,bufferM1BBl[0],"M1 Lower Band",LowerLineColor);
+   DrawPriceLabel(mM5,lblM5h,bufferM5BBh[0],"M5 BB Upper",UpperLineColor);
+   DrawPriceLabel(mM5,lblM5m,bufferM5BBm[0],"M5 BB Main",MainLineColor);
+   DrawPriceLabel(mM5,lblM5l,bufferM5BBl[0],"M5 BB Lower",LowerLineColor);
 
-   DrawPriceLabel(mM5,lblM5h,bufferM5BBh[0],"M5 Upper Band",UpperLineColor);
-   DrawPriceLabel(mM5,lblM5m,bufferM5BBm[0],"M5 Main Band",MainLineColor);
-   DrawPriceLabel(mM5,lblM5l,bufferM5BBl[0],"M5 Lower Band",LowerLineColor);
+   DrawPriceLabel(mM15,lblM15h,bufferM15BBh[0],"M15 BB Upper",UpperLineColor);
+   DrawPriceLabel(mM15,lblM15m,bufferM15BBm[0],"M15 BB Main",MainLineColor);
+   DrawPriceLabel(mM15,lblM15l,bufferM15BBl[0],"M15 BB Lower",LowerLineColor);
 
-   DrawPriceLabel(mM15,lblM15h,bufferM15BBh[0],"M15 Upper Band",UpperLineColor);
-   DrawPriceLabel(mM15,lblM15m,bufferM15BBm[0],"M15 Main Band",MainLineColor);
-   DrawPriceLabel(mM15,lblM15l,bufferM15BBl[0],"M15 Lower Band",LowerLineColor);
+   DrawPriceLabel(mM30,lblM30h,bufferM30BBh[0],"M30 BB Upper",UpperLineColor);
+   DrawPriceLabel(mM30,lblM30m,bufferM30BBm[0],"M30 BB Main",MainLineColor);
+   DrawPriceLabel(mM30,lblM30l,bufferM30BBl[0],"M30 BB Lower",LowerLineColor);
+  
+   DrawPriceLabel(mH1,lblH1h,bufferH1BBh[0],"H1 BB Upper",UpperLineColor);
+   DrawPriceLabel(mH1,lblH1m,bufferH1BBm[0],"H1 BB Main",MainLineColor);
+   DrawPriceLabel(mH1,lblH1l,bufferH1BBl[0],"H1 BB Lower",LowerLineColor);
 
-   DrawPriceLabel(mM30,lblM30h,bufferM30BBh[0],"M30 Upper Band",UpperLineColor);
-   DrawPriceLabel(mM30,lblM30m,bufferM30BBm[0],"M30 Main Band",MainLineColor);
-   DrawPriceLabel(mM30,lblM30l,bufferM30BBl[0],"M30 Lower Band",LowerLineColor);
+   DrawPriceLabel(mH4,lblH4h,bufferH4BBh[0],"H4 BB Upper",UpperLineColor);
+   DrawPriceLabel(mH4,lblH4m,bufferH4BBm[0],"H4 BB Main",MainLineColor);
+   DrawPriceLabel(mH4,lblH4l,bufferH4BBl[0],"H4 BB Lower",LowerLineColor);
 
-   DrawPriceLabel(mH1,lblH1h,bufferH1BBh[0],"H1 Upper Band",UpperLineColor);
-   DrawPriceLabel(mH1,lblH1m,bufferH1BBm[0],"H1 Main Band",MainLineColor);
-   DrawPriceLabel(mH1,lblH1l,bufferH1BBl[0],"H1 Lower Band",LowerLineColor);
+   DrawPriceLabel(mD1,lblD1h,bufferD1BBh[0],"D1 Upper",UpperLineColor);
+   DrawPriceLabel(mD1,lblD1m,bufferD1BBm[0],"D1 Main",MainLineColor);
+   DrawPriceLabel(mD1,lblD1l,bufferD1BBl[0],"D1 Lower",LowerLineColor);
 
-   DrawPriceLabel(mH4,lblH4h,bufferH4BBh[0],"H4 Upper Band",UpperLineColor);
-   DrawPriceLabel(mH4,lblH4m,bufferH4BBm[0],"H4 Main Band",MainLineColor);
-   DrawPriceLabel(mH4,lblH4l,bufferH4BBl[0],"H4 Lower Band",LowerLineColor);
+   DrawPriceLabel(mW1,lblW1h,bufferW1BBh[0],"W1 BB Upper",UpperLineColor);
+   DrawPriceLabel(mW1,lblW1m,bufferW1BBm[0],"W1 BB Main",MainLineColor);
+   DrawPriceLabel(mW1,lblW1l,bufferW1BBl[0],"W1 BB Lower",LowerLineColor);
 
-   DrawPriceLabel(mD1,lblD1h,bufferD1BBh[0],"D1 Upper Band",UpperLineColor);
-   DrawPriceLabel(mD1,lblD1m,bufferD1BBm[0],"D1 Main Band",MainLineColor);
-   DrawPriceLabel(mD1,lblD1l,bufferD1BBl[0],"D1 Lower Band",LowerLineColor);
-
-   DrawPriceLabel(mW1,lblW1h,bufferW1BBh[0],"W1 Upper Band",UpperLineColor);
-   DrawPriceLabel(mW1,lblW1m,bufferW1BBm[0],"W1 Main Band",MainLineColor);
-   DrawPriceLabel(mW1,lblW1l,bufferW1BBl[0],"W1 Lower Band",LowerLineColor);
-
-   DrawPriceLabel(mMN1,lblMN1h,bufferMN1BBh[0],"MN1 Upper Band",UpperLineColor);
-   DrawPriceLabel(mMN1,lblMN1m,bufferMN1BBm[0],"MN1 Main Band",MainLineColor);
-   DrawPriceLabel(mMN1,lblMN1l,bufferMN1BBl[0],"MN1 Lower Band",LowerLineColor);
+   DrawPriceLabel(mMN1,lblMN1h,bufferMN1BBh[0],"MN1 BB Upper",UpperLineColor);
+   DrawPriceLabel(mMN1,lblMN1m,bufferMN1BBm[0],"MN1 BB Main",MainLineColor);
+   DrawPriceLabel(mMN1,lblMN1l,bufferMN1BBl[0],"MN1 BB Lower",LowerLineColor);
   }
 //+------------------------------------------------------------------+
 //| Rest events handler                                                    |
@@ -612,8 +512,6 @@ void OnChartEvent(const int id,
    ExtDialog.ChartEvent(id,lparam,dparam,sparam);
   }
 //+------------------------------------------------------------------+
-
-//+------------------------------------------------------------------+
 void InitBuffers()
   {
 
@@ -653,8 +551,6 @@ void InitBuffers()
    AddBuffer(25,bufferM1BBm,DRAW_NONE,MainStyle,MainLineWidth,MainLineColor,"M1 BB Main");
    AddBuffer(26,bufferM1BBl,DRAW_NONE,LowerStyle,LowerLineWidth,LowerLineColor,"M1 BB Lower");
   }
-//+------------------------------------------------------------------+
-//|                                                                  |
 //+------------------------------------------------------------------+
 void AddBuffer(int idx,double &buffer[],int type,int style=EMPTY,int width=EMPTY,color clr=clrNONE,string text="")
   {
@@ -734,35 +630,38 @@ int RunIndicators()
    return(0);
   }
 //+------------------------------------------------------------------+
-
-//+------------------------------------------------------------------+
-//|                                                                  |
-//+------------------------------------------------------------------+
 void DrawPriceLabel(bool show,int lblHwnd,double price,string text,color foreground,color background=clrLightGray)
-  {
-   const string prefix = "MTF BBands";
+  {   
    string lblName=prefix+text;
    string hLineName=prefix+"hLine"+text;
-   ObjectDelete(0,lblName);
-   ObjectDelete(0,hLineName);
+   
    if(show)
      {
-      int x,y;
-      datetime fwdTime;
-      int      window=0;
-
-      ChartTimePriceToXY(0,0,Time[0],price,x,y);
-      x = x + 30;
-      y = y - 8;
-      ChartXYToTimePrice(0,x,y,window,fwdTime,price);
-
-      ObjectCreate(lblName,OBJ_TEXT,0,fwdTime,price);
-      ObjectSetText(lblName,text,9,"Verdana",foreground);
-      ObjectSet(lblName,OBJPROP_CORNER,0);
-      ObjectSet(lblName,OBJPROP_XDISTANCE,250);
-      ObjectSet(lblName,OBJPROP_YDISTANCE,20);
+      if(ShowPriceLabels){      
+         int x,y;
+         datetime fwdTime;
+         int      window=0;
+   
+         ChartTimePriceToXY(0,0,Time[0],price,x,y);
+         x = x + 30;
+         y = y - 8;
+         ChartXYToTimePrice(0,x,y,window,fwdTime,price);
+   
+         ObjectCreate(lblName,OBJ_TEXT,0,fwdTime,price);      
+         ObjectSetText(lblName,text+":"+PriceToStr(price),9,"Verdana",foreground);
+         ObjectSet(lblName,OBJPROP_CORNER,0);
+         ObjectSet(lblName,OBJPROP_XDISTANCE,250);
+         ObjectSet(lblName,OBJPROP_YDISTANCE,20);           
+      }
       
-      HLineCreate(0,hLineName,0,price,foreground,1,1);
+      if(ShowHorizontalLines){      
+         if(StringFind(text,"Upper") > 0)
+            HLineCreate(0,hLineName,0,price,UpperLineColor, UpperStyle, UpperLineWidth);
+         if(StringFind(text,"Main") > 0)
+            HLineCreate(0,hLineName,0,price,MainLineColor, MainStyle, MainLineWidth);
+         if(StringFind(text,"Lower") > 0)
+            HLineCreate(0,hLineName,0,price,LowerLineColor, LowerStyle, LowerLineWidth);        
+      }
      }
   }
 //+------------------------------------------------------------------+
@@ -842,40 +741,35 @@ bool HLineCreate(const long            chart_ID=0,        // chart's ID
                  const ENUM_LINE_STYLE style=STYLE_SOLID, // line style 
                  const int             width=1,           // line width 
                  const bool            back=false,        // in the background 
-                 const bool            selection=true,    // highlight to move 
+                 const bool            selection=false,    // highlight to move 
                  const bool            hidden=true,       // hidden in the object list 
                  const long            z_order=0)         // priority for mouse click 
   { 
-//--- if the price is not set, set it at the current Bid price level 
    if(!price) 
       price=SymbolInfoDouble(Symbol(),SYMBOL_BID); 
-//--- reset the error value 
+
    ResetLastError(); 
-//--- create a horizontal line 
    if(!ObjectCreate(chart_ID,name,OBJ_HLINE,sub_window,0,price)) 
      { 
       Print(__FUNCTION__, 
             ": failed to create a horizontal line! Error code = ",GetLastError()); 
       return(false); 
      } 
-//--- set line color 
    ObjectSetInteger(chart_ID,name,OBJPROP_COLOR,clr); 
-//--- set line display style 
    ObjectSetInteger(chart_ID,name,OBJPROP_STYLE,style); 
-//--- set line width 
    ObjectSetInteger(chart_ID,name,OBJPROP_WIDTH,width); 
-//--- display in the foreground (false) or background (true) 
    ObjectSetInteger(chart_ID,name,OBJPROP_BACK,back); 
-//--- enable (true) or disable (false) the mode of moving the line by mouse 
-//--- when creating a graphical object using ObjectCreate function, the object cannot be 
-//--- highlighted and moved by default. Inside this method, selection parameter 
-//--- is true by default making it possible to highlight and move the object 
    ObjectSetInteger(chart_ID,name,OBJPROP_SELECTABLE,selection); 
    ObjectSetInteger(chart_ID,name,OBJPROP_SELECTED,selection); 
-//--- hide (true) or display (false) graphical object name in the object list 
    ObjectSetInteger(chart_ID,name,OBJPROP_HIDDEN,hidden); 
-//--- set the priority for receiving the event of a mouse click in the chart 
    ObjectSetInteger(chart_ID,name,OBJPROP_ZORDER,z_order); 
-//--- successful execution 
+
    return(true); 
-  } 
+  }
+//+------------------------------------------------------------------+    
+string PriceToStr(double price) {    
+    int digits = (int)MarketInfo(_Symbol, MODE_DIGITS);
+    string formattedPrice = DoubleToStr(price, digits);
+    return formattedPrice;
+}
+//+------------------------------------------------------------------+
